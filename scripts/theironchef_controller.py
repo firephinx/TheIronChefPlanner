@@ -12,11 +12,14 @@ class TheIronChefController:
 		self.current_gantry_position = [0.0, 0.0, 0.0]
 		self.current_arm_position = [0.0, 0.0, 0.0]
 
-		self.reset_pub = rospy.Publisher('/TheIronChef/Reset', Empty, queue_size=1)
-		self.home_pub = rospy.Publisher('/TheIronChef/Home', Empty, queue_size=1)
+		self.reset_pub = rospy.Publisher('/TheIronChef/Reset', Empty, queue_size=10)
+		self.home_pub = rospy.Publisher('/TheIronChef/Home', Empty, queue_size=10)
+		self.home_x_gantry_pub = rospy.Publisher('/TheIronChef/HomeXGantry', Empty, queue_size=10)
+		self.home_y_gantry_pub = rospy.Publisher('/TheIronChef/HomeYGantry', Empty, queue_size=10)
+		self.home_z_gantry_pub = rospy.Publisher('/TheIronChef/HomeZGantry', Empty, queue_size=10)
 		self.move_gantry_pub = rospy.Publisher('/TheIronChef/move_gantry', Point, queue_size=10);
 		self.move_arm_pub = rospy.Publisher('/TheIronChef/move_arm', Point, queue_size=10)
-		self.electromagnet_pub = rospy.Publisher('/TheIronChef/Electromagnet_Switch', Bool, queue_size=1)
+		self.electromagnet_pub = rospy.Publisher('/TheIronChef/Electromagnet_Switch', Bool, queue_size=10)
 
 		rospy.sleep(0.1)
 
@@ -34,6 +37,27 @@ class TheIronChefController:
 		self.home_pub.publish(empty_msg)
 		done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
 		return done_homing_msg.data && self.home_arm()
+
+	def home_x_gantry(self):
+		empty_msg = Empty()
+		self.home_x_gantry_pub.publish(empty_msg)
+		self.home_x_gantry_pub.publish(empty_msg)
+		done_homing_x_gantry_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+		return done_homing_x_gantry_msg.data
+
+	def home_y_gantry(self):
+		empty_msg = Empty()
+		self.home_y_gantry_pub.publish(empty_msg)
+		self.home_y_gantry_pub.publish(empty_msg)
+		done_homing_y_gantry_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+		return done_homing_y_gantry_msg.data
+
+	def home_z_gantry(self):
+		empty_msg = Empty()
+		self.home_z_gantry_pub.publish(empty_msg)
+		self.home_z_gantry_pub.publish(empty_msg)
+		done_homing_z_gantry_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+		return done_homing_z_gantry_msg.data
 
 	def move_gantry(self, desired_gantry_position):
 		point_msg = Point()
