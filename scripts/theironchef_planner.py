@@ -5,63 +5,135 @@ import math
 import numpy
 import argparse
 from theironchef_controller import TheIronChefController
+import theironchef_stations as tic_stations
 #from theironchef_ik import TheIronChefIK
 #from theironchef_cv import TheIronChefCV
 
 #All measurements in meters and degrees
     
-def get_attachment_station_coords(station):
-    if (station == "gripper"):
-        coords = [0.0, 0.0, 0.0]
-    elif (station == "syringe"):
-        coords = [0.0, 0.0, 0.0]
-    else:
-        coords = [0.0, 0.0, 0.0]
-    # Move the gantry to the coordinates
-    return coords
+class TheIronChefPlanner:
 
-def get_station_coords(station):
-    if(station == "steaks"):
-        coords = [0.0, 0.0, 0.0]
-    elif(station == "griddle"):
-        coords = [0.0, 0.0, 0.0]
-    else:
-        coords = [0.0, 0.0, 0.0]
-    return coords
+    def __init__(self):
+        self.tic_controller = TheIronChefController()
+        #self.tic_ik = TheIronChefIK()
+        #self.tic_cv = TheIronChefCV()
 
-if __name__ == '__main__':
+        self.done_moving_gantry_flag = False
+        self.done_moving_arm_flag = False
+        self.done_homing_robot_flag = False
+        self.done_homing_arm_flag = False
+        self.done_homing_gantry_flag = False
+        self.electromagnet_status = False
 
-    tic_controller = TheIronChefController()
-    #tic_ik = TheIronChefIK()
-    #tic_cv = TheIronChefCV()
+    def reset_robot(self):
+        print("Resetting robot")
+        self.tic_controller.reset_robot()
+        print("Reset robot")
 
-    tic_controller.reset_robot()
-    tic_controller.home_robot()
+    def home_robot(self):
+        print("Homing Robot")
 
-    gripper_coords = get_attachment_station_coords("gripper")
+        self.done_homing_robot_flag = self.tic_controller.home_robot()
+        while(self.done_homing_robot_flag != True):
+           self.done_homing_robot_flag = self.tic_controller.home_robot() 
 
-    done_moving_robot_base_flag = tic_controller.move_gantry(gripper_coords)
-    while(done_moving_robot_base_flag != True):
-        done_moving_robot_base_flag = tic_controller.move_gantry(gripper_coords)
+        print("Done Homing Robot")
 
-    cur_gantry_pos = tic_controller.get_current_position()
-    print("Gantry Position: [" + str(cur_gantry_pos[0]) + ", " + str(cur_gantry_pos[1]) + ", " + str(cur_gantry_pos[2]) + "]")
+    def home_arm(self):
+        print("Homing Arm")
 
-    steak_coords = get_station_coords("steaks")
+        self.done_homing_arm_flag = self.tic_controller.home_arm()
+        while(self.done_homing_arm_flag != True):
+            self.done_homing_arm_flag = self.tic_controller.home_arm()
 
-    done_moving_robot_base_flag = tic_controller.move_gantry(steak_coords)
-    while(done_moving_robot_base_flag != True):
-        done_moving_robot_base_flag = tic_controller.move_gantry(steak_coords)
+        print("Done Homing Arm")
 
-    cur_gantry_pos = tic_controller.get_current_position()
-    print("Gantry Position: [" + str(cur_gantry_pos[0]) + ", " + str(cur_gantry_pos[1]) + ", " + str(cur_gantry_pos[2]) + "]")
+    def home_gantry(self):
+        print("Homing Gantry")
 
-    griddle_coords = get_station_coords("griddle")
+        self.done_homing_gantry_flag = self.tic_controller.home_gantry()
+        while(self.done_homing_gantry_flag != True):
+            self.done_homing_gantry_flag = self.tic_controller.home_gantry()
 
-    done_moving_robot_base_flag = tic_controller.move_gantry(griddle_coords)
-    while(done_moving_robot_base_flag != True):
-        done_moving_robot_base_flag = tic_controller.move_gantry(griddle_coords)
+        print("Done Homing Gantry")
 
-    cur_gantry_pos = tic_controller.get_current_position()
-    print("Gantry Position: [" + str(cur_gantry_pos[0]) + ", " + str(cur_gantry_pos[1]) + ", " + str(cur_gantry_pos[2]) + "]")
+    def move_gantry(self, desired_gantry_coords):
+        self.print_current_gantry_position()
 
+        print("Desired Gantry Position: [" + str(desired_gantry_coords[0]) + ", " + str(desired_gantry_coords[1]) + ", " + str(desired_gantry_coords[2]) + "]")
+
+        self.done_moving_gantry_flag = self.tic_controller.move_gantry(desired_gantry_coords)
+        while(self.done_moving_gantry_flag != True):
+            self.done_moving_gantry_flag = self.tic_controller.move_gantry(desired_gantry_coords)
+
+        self.print_current_gantry_position()
+
+    def move_arm(self, desired_arm_angles):
+        self.print_current_arm_angles()
+
+        print("Desired Arm Angles: [" + str(desired_arm_angles[0]) + ", " + str(desired_arm_angles[1]) + ", " + str(desired_arm_angles[2]) + "]")
+
+        self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
+        while(self.done_moving_arm_flag != True):
+            self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
+
+        self.print_current_arm_angles()
+    
+    def print_current_gantry_position(self):
+        self.current_gantry_position = self.tic_controller.get_current_gantry_position()
+        print("Current Gantry Position: [" + str(self.current_gantry_position[0]) + ", " + str(self.current_gantry_position[1]) + ", " + str(self.current_gantry_position[2]) + "]")
+
+    def print_current_arm_angles(self):
+        self.current_arm_angles = self.tic_controller.get_current_arm_angles()
+        print("Current Arm Angles: [" + str(self.current_arm_angles[0]) + ", " + str(self.current_arm_angles[1]) + ", " + str(self.current_arm_angles[2]) + "]")
+
+    def turn_on_electromagnet(self):
+        print("Turning on electromagnet.")
+        self.electromagnet_status = self.tic_controller.electromagnet_switch("on")
+        while(self.electromagnet_status != True):
+            self.electromagnet_status = self.tic_controller.electromagnet_switch("on")
+        print("Done turning on electromagnet.")
+
+    def turn_off_electromagnet(self):
+        print("Turning off electromagnet.")
+        self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
+        while(self.electromagnet_status != False):
+            self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
+        print("Done turning off electromagnet.")
+
+    def cook_steak(self):
+        self.reset_robot()
+        self.home_robot()
+
+        gripper_coords = tic_stations.get_attachment_station_coords("gripper")
+
+        self.move_gantry(gripper_coords)
+
+        self.turn_on_electromagnet()
+
+        self.move_gantry([gripper_coords[0], 0.0, 0.0])
+
+        self.move_gantry([gripper_coords[0] - 0.05, 0.0, 0.0])
+    
+        steak_coords = tic_stations.get_station_coords("steaks")
+
+        self.move_gantry([gripper_coords[0] - 0.05, steak_coords[1], 0.0])
+
+        self.move_gantry(steak_coords)
+
+        # Close gripper around steak
+        self.move_arm([90, 6, 55])
+
+        self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
+
+        self.move_gantry([steak_coords[0] - 0.05, steak_coords[1], 0.0])
+
+        self.move_arm([90, 90, 55])
+
+        griddle_coords = tic_stations.get_station_coords("gripper")
+
+        self.move_gantry(griddle_coords)
+
+        self.move_arm([90, 90, 70])
+
+        self.move_gantry(gripper_coords)
