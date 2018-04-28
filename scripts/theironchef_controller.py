@@ -119,6 +119,7 @@ class TheIronChefController:
 			return False
 
 	def move_arm(self, desired_arm_angles):
+		point_msg = Point()
 		point_msg.x = desired_arm_angles[0]
 		point_msg.y = desired_arm_angles[1]
 		point_msg.z = desired_arm_angles[2]
@@ -139,6 +140,20 @@ class TheIronChefController:
 					joint_state_msg.position[3], joint_state_msg.position[4], joint_state_msg.position[5]]
 		except:
 			return [0.0, 0.0, 0.0, 0.0, 0.0, 0.0]
+
+	def get_current_gantry_position(self):
+		try:
+			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 10)
+			return [joint_state_msg.position[0], joint_state_msg.position[1], joint_state_msg.position[2]]
+		except:
+			return [0.0, 0.0, 0.0]
+
+	def get_current_arm_angles(self):
+		try:
+			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 10)
+			return [joint_state_msg.position[3], joint_state_msg.position[4], joint_state_msg.position[5]]
+		except:
+			return [0.0, 0.0, 0.0]
 
 	def electromagnet_switch(self, switch):
 		bool_msg = Bool()

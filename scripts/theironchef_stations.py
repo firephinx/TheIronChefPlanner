@@ -14,7 +14,7 @@ def get_station_coords(station):
     if(station == "steaks"):
         coords = [0.73, 0.33, 0.07]
     elif(station == "griddle"):
-        coords = [0.0, 0.0, 0.0]
+        coords = [0.8, 0.33, 0.0]
     else:
         coords = [0.0, 0.0, 0.0]
     return coords
