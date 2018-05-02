@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import time
 import rospy
 import math
 import numpy
@@ -68,6 +69,9 @@ class TheIronChefPlanner:
 
         self.print_current_gantry_position()
 
+    def move_x_gantry_to_center(self):
+        self.move_gantry([0.5, 0.0, 0.0])
+
     def move_arm(self, desired_arm_angles):
         self.print_current_arm_angles()
 
@@ -76,6 +80,18 @@ class TheIronChefPlanner:
         self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
         while(self.done_moving_arm_flag != True):
             self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
+
+        self.print_current_arm_angles()
+
+    def dispense_syringe(self, speed, time):
+        self.print_current_arm_angles()
+
+        desired_arm_angles = [self.current_arm_angles[0], self.current_arm_angles[1], speed]
+
+        print("Desired Arm Angles: [" + str(desired_arm_angles[0]) + ", " + str(desired_arm_angles[1]) + ", " + str(desired_arm_angles[2]) + "]")
+
+        self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
+        time.sleep(time)
 
         self.print_current_arm_angles()
     
@@ -102,8 +118,6 @@ class TheIronChefPlanner:
         print("Done turning off electromagnet.")
 
     def cook_steak(self):
-        self.reset_robot()
-        self.home_robot()
 
         gripper_coords = tic_stations.get_attachment_station_coords("gripper")
 
@@ -122,18 +136,20 @@ class TheIronChefPlanner:
         self.move_gantry(steak_coords)
 
         # Close gripper around steak
-        self.move_arm([90, 6, 55])
+        self.move_arm([90, 6, 20])
 
         self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
 
-        self.move_gantry([steak_coords[0] - 0.05, steak_coords[1], 0.0])
+        self.move_arm([90, 90, 20])
 
-        self.move_arm([90, 90, 55])
+        griddle_coords = tic_stations.get_station_coords("griddle")
 
-        griddle_coords = tic_stations.get_station_coords("gripper")
+        self.move_gantry([griddle_coords[0], griddle_coords[1], 0.0])
 
         self.move_gantry(griddle_coords)
 
         self.move_arm([90, 90, 70])
 
         self.move_gantry(gripper_coords)
+
+        self.turn_off_electromagnet()
