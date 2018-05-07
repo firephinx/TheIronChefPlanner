@@ -26,6 +26,14 @@ class TheIronChefPlanner:
         self.done_homing_gantry_flag = False
         self.electromagnet_status = False
 
+        self.attachment_liftup_height = 0.01
+        self.gripper1_y_pickup_offset = 0.1
+        self.gripper2_y_pickup_offset = 0.1
+        self.syringe_y_pickup_offset = -0.1
+
+        self.steak_push_y_offset = 0.1
+        self.steak_push_z_offset = 0.03
+
     def reset_robot(self):
         print("Resetting robot")
         self.tic_controller.reset_robot()
@@ -55,6 +63,15 @@ class TheIronChefPlanner:
         self.done_homing_gantry_flag = self.tic_controller.home_gantry()
         while(self.done_homing_gantry_flag != True):
             self.done_homing_gantry_flag = self.tic_controller.home_gantry()
+
+        print("Done Homing Gantry")
+
+    def home_z_gantry(self):
+        print("Homing Z Gantry")
+
+        self.done_homing_gantry_flag = self.tic_controller.home_z_gantry()
+        while(self.done_homing_gantry_flag != True):
+            self.done_homing_gantry_flag = self.tic_controller.home_z_gantry()
 
         print("Done Homing Gantry")
 
@@ -110,6 +127,12 @@ class TheIronChefPlanner:
             self.electromagnet_status = self.tic_controller.electromagnet_switch("on")
         print("Done turning on electromagnet.")
 
+        print("Turning on electromagnet again just to make sure.")
+        self.electromagnet_status = self.tic_controller.electromagnet_switch("on")
+        while(self.electromagnet_status != True):
+            self.electromagnet_status = self.tic_controller.electromagnet_switch("on")
+        print("Done turning on electromagnet.")
+
     def turn_off_electromagnet(self):
         print("Turning off electromagnet.")
         self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
@@ -117,39 +140,204 @@ class TheIronChefPlanner:
             self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
         print("Done turning off electromagnet.")
 
-    def cook_steak(self):
+        print("Turning off electromagnet again just to make sure.")
+        self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
+        while(self.electromagnet_status != False):
+            self.electromagnet_status = self.tic_controller.electromagnet_switch("off")
+        print("Done turning off electromagnet.")
 
-        gripper_coords = tic_stations.get_attachment_station_coords("gripper")
+    def rack_gripper_1(self):
+        gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
 
-        self.move_gantry(gripper_coords)
+        self.move_arm([179, 87, 87])
 
-        self.turn_on_electromagnet()
+        self.move_gantry([0.0, gripper_1_coords[1] + self.gripper1_y_pickup_offset, 0.0])
 
-        self.move_gantry([gripper_coords[0], 0.0, 0.0])
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
 
-        self.move_gantry([gripper_coords[0] - 0.05, 0.0, 0.0])
-    
-        steak_coords = tic_stations.get_station_coords("steaks")
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
 
-        self.move_gantry([gripper_coords[0] - 0.05, steak_coords[1], 0.0])
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1], gripper_1_coords[2] - self.attachment_liftup_height])
 
-        self.move_gantry(steak_coords)
-
-        # Close gripper around steak
-        self.move_arm([90, 6, 20])
-
-        self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
-
-        self.move_arm([90, 90, 20])
-
-        griddle_coords = tic_stations.get_station_coords("griddle")
-
-        self.move_gantry([griddle_coords[0], griddle_coords[1], 0.0])
-
-        self.move_gantry(griddle_coords)
-
-        self.move_arm([90, 90, 70])
-
-        self.move_gantry(gripper_coords)
+        self.move_gantry(gripper_1_coords)
 
         self.turn_off_electromagnet()
+
+        self.home_z_gantry()
+
+    def rack_gripper_2(self):
+        gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
+
+        self.move_arm([87, 87, 100])
+
+        self.move_gantry([0.0, gripper_2_coords[1] + self.gripper2_y_pickup_offset, 0.0])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, 0.0])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, gripper_2_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1], gripper_2_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry(gripper_2_coords)
+
+        self.turn_off_electromagnet()
+
+        self.home_z_gantry()
+
+    def rerack_gripper_1(self):
+        gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
+
+        self.move_arm([179, 87, 87])
+
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1], gripper_1_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry(gripper_1_coords)
+
+        self.turn_off_electromagnet()
+
+        self.home_z_gantry()
+
+    def rerack_gripper_2(self):
+        gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
+
+        self.move_arm([87, 87, 100])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, 0.0])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, gripper_2_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1], gripper_2_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry(gripper_2_coords)
+
+        self.turn_off_electromagnet()
+
+        self.home_z_gantry()
+
+    def cook_steak(self):
+
+        # # Pick up gripper 1
+        # gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
+
+        # self.move_arm([179, 87, 87])
+
+        # self.move_gantry(gripper_1_coords)
+
+        # self.turn_on_electromagnet()
+
+        # self.move_gantry([gripper_1_coords[0], gripper_1_coords[1], gripper_1_coords[2] - self.attachment_liftup_height])
+
+        # self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
+
+        # self.home_z_gantry()
+
+        # self.move_arm([87, 87, 87])
+    
+        # # Pick up the steak
+        # steak_coords = tic_stations.get_station_coords("steaks")
+
+        # self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
+
+        # self.move_gantry(steak_coords)
+
+        # # Close gripper around steak
+        # self.move_arm([87, 87, 6])
+
+        # self.home_z_gantry()
+
+        # # Move the steak over the griddle
+        # griddle_coords = tic_stations.get_station_coords("griddle")
+
+        # self.move_gantry([griddle_coords[0], griddle_coords[1], 0.0])
+
+        # self.move_gantry(griddle_coords)
+
+        # self.move_arm([87, 87, 87])
+
+        # self.move_gantry([griddle_coords[0], griddle_coords[1], griddle_coords[2] + self.steak_push_z_offset])
+
+        # self.move_gantry([griddle_coords[0], griddle_coords[1] - self.steak_push_y_offset, griddle_coords[2] + self.steak_push_z_offset])
+
+        # self.home_z_gantry()
+
+        # # Rerack gripper 1
+        # self.rerack_gripper_1()
+
+        # griddle_coords = tic_stations.get_station_coords("griddle")
+
+        # # Pick up gripper 2
+        # self.move_arm([87, 87, 100])
+        # gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
+
+        # self.move_gantry(gripper_2_coords)
+
+        # self.turn_on_electromagnet()
+
+        # self.move_gantry([gripper_2_coords[0], gripper_2_coords[1], gripper_2_coords[2] - self.attachment_liftup_height])
+
+        # self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, gripper_2_coords[2] - self.attachment_liftup_height])
+
+        # self.home_z_gantry()
+
+        # Flip the steak
+        steak_flip_initial_coords = tic_stations.get_station_coords("steak_flip_initial")
+
+        self.move_gantry([steak_flip_initial_coords[0], steak_flip_initial_coords[1], 0.0])
+
+        self.move_arm([179, 179, 87])
+
+        self.move_gantry(steak_flip_initial_coords)
+
+        steak_flip_done_coords = tic_stations.get_station_coords("steak_flip_done")
+
+        self.move_gantry(steak_flip_done_coords)
+
+        self.move_arm([179, 179, 6])
+
+        self.home_z_gantry()
+
+        steak_flip_drop_coords = tic_stations.get_station_coords("steak_flip_drop")
+
+        self.move_gantry([steak_flip_drop_coords[0], steak_flip_drop_coords[1], 0.0])
+
+        self.move_arm([179, 150, 87])
+
+        self.move_gantry([steak_flip_initial_coords[0], steak_flip_initial_coords[1], 0.0])
+
+        # Wait for the steak to cook
+        time.sleep(10)
+
+        # Pick up the steak
+        self.move_arm([179, 179, 87])
+
+        self.move_gantry(steak_flip_initial_coords)
+
+        self.move_gantry(steak_flip_done_coords)
+
+        self.move_arm([179, 179, 6])
+
+        self.home_z_gantry()
+
+        # Move the steak to the plate
+        plate_coords = tic_stations.get_station_coords("plate")
+
+        self.move_gantry([steak_flip_done_coords[0], plate_coords[1], 0.0])
+
+        self.move_gantry([plate_coords[0], plate_coords[1], 0.0])
+
+        self.move_gantry(plate_coords)
+
+        self.move_arm([179, 130, 87])
+
+        self.home_z_gantry()
+
+        # Rerack gripper 2
+        self.move_gantry([gripper_2_coords[0], plate_coords[1], 0.0])
+
+        self.rerack_gripper_2()
+
+        self.home_robot()

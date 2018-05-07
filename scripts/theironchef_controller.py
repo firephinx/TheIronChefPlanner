@@ -38,7 +38,7 @@ class TheIronChefController:
 		self.home_arm_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except:
 			return False
@@ -50,7 +50,7 @@ class TheIronChefController:
 		self.home_gantry_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except:
 			return False
@@ -62,7 +62,7 @@ class TheIronChefController:
 		self.home_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except:
 			return False
@@ -74,7 +74,7 @@ class TheIronChefController:
 		self.home_x_gantry_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except:
 			return False
@@ -86,7 +86,7 @@ class TheIronChefController:
 		self.home_y_gantry_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except: 
 			return False
@@ -98,7 +98,7 @@ class TheIronChefController:
 		self.home_z_gantry_pub.publish(empty_msg)
 
 		try:
-			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool)
+			done_homing_msg = rospy.wait_for_message('/TheIronChef/done_homing', Bool, 5)
 			return done_homing_msg.data
 		except:
 			return False
@@ -113,7 +113,7 @@ class TheIronChefController:
 		self.move_gantry_pub.publish(point_msg)
 
 		try:
-			done_moving_gantry_msg = rospy.wait_for_message('/TheIronChef/done_moving_gantry', Bool)
+			done_moving_gantry_msg = rospy.wait_for_message('/TheIronChef/done_moving_gantry', Bool, 5)
 			return done_moving_gantry_msg.data
 		except:
 			return False
@@ -128,14 +128,14 @@ class TheIronChefController:
 		self.move_arm_pub.publish(point_msg)
 
 		try:
-			done_moving_arm_msg = rospy.wait_for_message('TheIronChef/done_moving_arm', Bool)
+			done_moving_arm_msg = rospy.wait_for_message('TheIronChef/done_moving_arm', Bool, 5)
 			return done_moving_arm_msg.data
 		except:
 			return False
 
 	def get_current_position(self):
 		try:
-			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 10)
+			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 1)
 			return [joint_state_msg.position[0], joint_state_msg.position[1], joint_state_msg.position[2],
 					joint_state_msg.position[3], joint_state_msg.position[4], joint_state_msg.position[5]]
 		except:
@@ -143,14 +143,14 @@ class TheIronChefController:
 
 	def get_current_gantry_position(self):
 		try:
-			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 10)
+			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 1)
 			return [joint_state_msg.position[0], joint_state_msg.position[1], joint_state_msg.position[2]]
 		except:
 			return [0.0, 0.0, 0.0]
 
 	def get_current_arm_angles(self):
 		try:
-			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 10)
+			joint_state_msg = rospy.wait_for_message('/TheIronChef/joint_states', JointState, 1)
 			return [joint_state_msg.position[3], joint_state_msg.position[4], joint_state_msg.position[5]]
 		except:
 			return [0.0, 0.0, 0.0]
