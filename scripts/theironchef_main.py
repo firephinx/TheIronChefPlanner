@@ -38,25 +38,24 @@ class DecimalEncoder(json.JSONEncoder):
                 return int(o)
         return super(DecimalEncoder, self).default(o)
 
-dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodc.us-east-1.amazonaws.com")
+dynamodb = boto3.resource('dynamodb', region_name='us-east-1', endpoint_url="https://dynamodb.us-east-1.amazonaws.com")
 
 table = dynamodb.Table('IronChefOrders')
 
 def GetData():
-    timestamp = datetime.datetime.utcnow() - datetime.timedelta(minutes = 5)
     now = datetime.datetime.utcnow() 
     date = str(now.date())
-    timestamp = str(now.time())
+    timestamp5minago = datetime.datetime.utcnow() - datetime.timedelta(minutes = 5)
+    timestamp = str(timestamp5minago.time())
     try:
-        response = table.query(
-            KeyConditionExpression= Key('date').eq(date)
+        response = table.scan(
+            FilterExpression=Attr('date').eq(date) & Attr('timestamp').gt(timestamp)
         )
     except ClientError as e:
         print(e.response['Error']['Message'])
     else:
-        ## FINISH CODE HERE:
-        pass
-        
+        items = response['Items']
+        return items
 
 def run_main():
     lastData = 0
@@ -65,7 +64,7 @@ def run_main():
 
     tic_planner.reset_robot()
 
-    # tic_planner.home_robot()
+    tic_planner.home_robot()
 
     # tic_planner.turn_on_electromagnet()
 
@@ -77,16 +76,16 @@ def run_main():
 
     # tic_planner.rack_gripper_2()
 
-    tic_planner.cook_steak()
-     #    data = GetData()
-     #    now = datetime.datetime.utcnow() 
-        # timestamp = str(now.time())
-     #    if ((timestamp - int(data[1])) < 45 and lastData != data[1]):
-     #        lastData = data[1]
-     #        print ("Latest Command is: " + str(data[0]))
+    #tic_planner.cook_steak()
+    while(True):
+        data = GetData()
+        if(len(data) > 0):
+            latestcommand = data[0]
+            if(latestcommand['menu_item'] == "steak"):
+                print ("Desired doneness is: " + latestcommand['meat_doneness'])
+                tic_planner.cook_steak(latestcommand['meat_doneness'])
 
-     #        tic_planner.cook_steak()
-     #    time.sleep(1)
+        time.sleep(1)
 
 if __name__ == '__main__':
     original_sigint = signal.getsignal(signal.SIGINT)

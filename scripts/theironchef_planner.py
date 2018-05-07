@@ -34,6 +34,11 @@ class TheIronChefPlanner:
         self.steak_push_y_offset = 0.1
         self.steak_push_z_offset = 0.03
 
+        self.syringe_dispense_time = 10
+        self.syringe_max_dispense_speed = 0.0
+        self.syringe_stop_dispense_speed = 85.0
+        self.syringe_liftup_height = 0.1
+
     def reset_robot(self):
         print("Resetting robot")
         self.tic_controller.reset_robot()
@@ -100,15 +105,17 @@ class TheIronChefPlanner:
 
         self.print_current_arm_angles()
 
-    def dispense_syringe(self, speed, time):
+    def dispense_syringe(self):
         self.print_current_arm_angles()
 
-        desired_arm_angles = [self.current_arm_angles[0], self.current_arm_angles[1], speed]
+        desired_arm_angles = [self.current_arm_angles[0], self.current_arm_angles[1], self.syringe_max_dispense_speed]
 
         print("Desired Arm Angles: [" + str(desired_arm_angles[0]) + ", " + str(desired_arm_angles[1]) + ", " + str(desired_arm_angles[2]) + "]")
 
         self.done_moving_arm_flag = self.tic_controller.move_arm(desired_arm_angles)
-        time.sleep(time)
+        time.sleep(self.syringe_dispense_time)
+
+        desired_arm_angles = [self.current_arm_angles[0], self.current_arm_angles[1], self.syringe_stop_dispense_speed]
 
         self.print_current_arm_angles()
     
@@ -187,6 +194,8 @@ class TheIronChefPlanner:
     def rerack_gripper_1(self):
         gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
 
+        self.home_z_gantry()
+
         self.move_arm([179, 87, 87])
 
         self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
@@ -204,6 +213,8 @@ class TheIronChefPlanner:
     def rerack_gripper_2(self):
         gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
 
+        self.home_z_gantry()
+
         self.move_arm([87, 87, 100])
 
         self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, 0.0])
@@ -218,70 +229,110 @@ class TheIronChefPlanner:
 
         self.home_z_gantry()
 
-    def cook_steak(self):
+    def rerack_syringe(self):
+        syringe_coords = tic_stations.get_attachment_station_coords("syringe")
 
-        # # Pick up gripper 1
-        # gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
+        self.move_arm([87, 87, 85])
 
-        # self.move_arm([179, 87, 87])
+        self.move_gantry([syringe_coords[0], syringe_coords[1] + self.syringe_y_pickup_offset, 0.08])
 
-        # self.move_gantry(gripper_1_coords)
+        self.move_gantry([syringe_coords[0], syringe_coords[1] + self.syringe_y_pickup_offset, syringe_coords[2] - self.attachment_liftup_height])
 
-        # self.turn_on_electromagnet()
+        self.move_gantry([syringe_coords[0], syringe_coords[1], syringe_coords[2] - self.attachment_liftup_height])
 
-        # self.move_gantry([gripper_1_coords[0], gripper_1_coords[1], gripper_1_coords[2] - self.attachment_liftup_height])
+        self.move_gantry(syringe_coords)
 
-        # self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
+        self.turn_off_electromagnet()
 
-        # self.home_z_gantry()
+        self.home_z_gantry()
 
-        # self.move_arm([87, 87, 87])
+    def cook_steak(self, meat_doneness):
+
+        # Pick up the syringe
+        syringe_coords = tic_stations.get_attachment_station_coords("syringe")
+
+        self.move_arm([87, 87, 85])
+
+        self.move_gantry(syringe_coords)
+
+        self.turn_on_electromagnet()
+
+        self.move_gantry([syringe_coords[0], syringe_coords[1], syringe_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([syringe_coords[0], syringe_coords[1] + self.syringe_y_pickup_offset, syringe_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([syringe_coords[0], syringe_coords[1] + self.syringe_y_pickup_offset, syringe_coords[2] - self.syringe_liftup_height])
+
+        oil_coords = tic_stations.get_station_coords("oil")
+
+        self.move_gantry(oil_coords)
+
+        self.move_arm([87, 120, 85])
+
+        self.dispense_syringe()
+
+        self.rerack_syringe()
+
+        # Pick up gripper 1
+        gripper_1_coords = tic_stations.get_attachment_station_coords("gripper1")
+
+        self.move_arm([179, 87, 87])
+
+        self.move_gantry(gripper_1_coords)
+
+        self.turn_on_electromagnet()
+
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1], gripper_1_coords[2] - self.attachment_liftup_height])
+
+        self.move_gantry([gripper_1_coords[0], gripper_1_coords[1] + self.gripper1_y_pickup_offset, gripper_1_coords[2] - self.attachment_liftup_height])
+
+        self.home_z_gantry()
+
+        self.move_arm([87, 87, 87])
     
-        # # Pick up the steak
-        # steak_coords = tic_stations.get_station_coords("steaks")
+        # Pick up the steak
+        steak_coords = tic_stations.get_station_coords("steaks")
 
-        # self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
+        self.move_gantry([steak_coords[0], steak_coords[1], 0.0])
 
-        # self.move_gantry(steak_coords)
+        self.move_gantry(steak_coords)
 
-        # # Close gripper around steak
-        # self.move_arm([87, 87, 6])
+        # Close gripper around steak
+        self.move_arm([87, 87, 6])
 
-        # self.home_z_gantry()
+        self.home_z_gantry()
 
-        # # Move the steak over the griddle
-        # griddle_coords = tic_stations.get_station_coords("griddle")
+        # Move the steak over the griddle
+        griddle_coords = tic_stations.get_station_coords("griddle")
 
-        # self.move_gantry([griddle_coords[0], griddle_coords[1], 0.0])
+        self.move_gantry([griddle_coords[0], griddle_coords[1], 0.0])
 
-        # self.move_gantry(griddle_coords)
+        self.move_gantry(griddle_coords)
 
-        # self.move_arm([87, 87, 87])
+        self.move_arm([87, 87, 87])
 
-        # self.move_gantry([griddle_coords[0], griddle_coords[1], griddle_coords[2] + self.steak_push_z_offset])
+        self.move_gantry([griddle_coords[0], griddle_coords[1], griddle_coords[2] + self.steak_push_z_offset])
 
-        # self.move_gantry([griddle_coords[0], griddle_coords[1] - self.steak_push_y_offset, griddle_coords[2] + self.steak_push_z_offset])
+        self.move_gantry([griddle_coords[0], griddle_coords[1] - self.steak_push_y_offset, griddle_coords[2] + self.steak_push_z_offset])
 
-        # self.home_z_gantry()
+        # Rerack gripper 1
+        self.rerack_gripper_1()
 
-        # # Rerack gripper 1
-        # self.rerack_gripper_1()
+        griddle_coords = tic_stations.get_station_coords("griddle")
 
-        # griddle_coords = tic_stations.get_station_coords("griddle")
+        # Pick up gripper 2
+        self.move_arm([87, 87, 100])
+        gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
 
-        # # Pick up gripper 2
-        # self.move_arm([87, 87, 100])
-        # gripper_2_coords = tic_stations.get_attachment_station_coords("gripper2")
+        self.move_gantry(gripper_2_coords)
 
-        # self.move_gantry(gripper_2_coords)
+        self.turn_on_electromagnet()
 
-        # self.turn_on_electromagnet()
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1], gripper_2_coords[2] - self.attachment_liftup_height])
 
-        # self.move_gantry([gripper_2_coords[0], gripper_2_coords[1], gripper_2_coords[2] - self.attachment_liftup_height])
+        self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, gripper_2_coords[2] - self.attachment_liftup_height])
 
-        # self.move_gantry([gripper_2_coords[0], gripper_2_coords[1] + self.gripper2_y_pickup_offset, gripper_2_coords[2] - self.attachment_liftup_height])
-
-        # self.home_z_gantry()
+        self.home_z_gantry()
 
         # Flip the steak
         steak_flip_initial_coords = tic_stations.get_station_coords("steak_flip_initial")
@@ -308,8 +359,17 @@ class TheIronChefPlanner:
 
         self.move_gantry([steak_flip_initial_coords[0], steak_flip_initial_coords[1], 0.0])
 
+        if(meat_doneness == 'rare'):
         # Wait for the steak to cook
-        time.sleep(10)
+            time.sleep(300)
+        elif(meat_doneness == 'medium rare'):
+            time.sleep(420)
+        elif(meat_doneness == 'medium'):
+            time.sleep(600)
+        elif(meat_doneness == 'medium well'):
+            time.sleep(720)
+        elif(meat_doneness == 'well done'):
+            time.sleep(900)
 
         # Pick up the steak
         self.move_arm([179, 179, 87])
@@ -332,8 +392,6 @@ class TheIronChefPlanner:
         self.move_gantry(plate_coords)
 
         self.move_arm([179, 130, 87])
-
-        self.home_z_gantry()
 
         # Rerack gripper 2
         self.move_gantry([gripper_2_coords[0], plate_coords[1], 0.0])
